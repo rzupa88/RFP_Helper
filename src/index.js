@@ -1,3 +1,4 @@
+require("dotenv").config();
 // src/index.js
 const express = require("express");
 const multer = require("multer");
@@ -68,3 +69,10 @@ app.post("/upload", upload.single("file"), (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+const db = require("./db");
+
+db.query("SELECT NOW()")
+  .then(res => console.log("Database connected:", res.rows[0]))
+  .catch(err => console.error("DB error:", err));
+
