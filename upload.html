@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Upload Test</title>
+</head>
+<body>
+  <h2>Upload a File</h2>
+  <form id="uploadForm" enctype="multipart/form-data" method="POST" action="http://localhost:3000/upload">
+    <input type="file" name="file" required />
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const resultDiv = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch("https://didactic-garbanzo-q6qx4r9x75rh9gqr-3000.app.github.dev/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        resultDiv.innerHTML = `<p><strong>Success:</strong> ${data.message}</p>
+                               <p>Original Name: ${data.originalname}</p>
+                               <p>Saved As: ${data.filename}</p>`;
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">Upload failed: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
