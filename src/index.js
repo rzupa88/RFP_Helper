@@ -5,8 +5,8 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
-const app = express();
 
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -14,8 +14,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (like upload.html)
-app.use(express.static(path.join(__dirname, "..")));
+// Serve static files from /public folder
+app.use(express.static(path.join(__dirname, "../public")));
 
 // File storage config
 const storage = multer.diskStorage({
@@ -41,12 +41,15 @@ const upload = multer({
   }
 });
 
-// Upload HTML page
+// Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../upload.html"));
+  res.sendFile(path.join(__dirname, "../public/upload.html"));
 });
 
-// File Upload Endpoint
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/admin.html"));
+});
+
 app.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
@@ -85,13 +88,27 @@ app.post("/add-question", async (req, res) => {
   }
 });
 
-// TEMP route to test DB insert locally
+// ✅ Correct route for frontend fetch
+app.get("/qna", async (req, res) => {
+  const db = getDB();
+
+  try {
+    const result = await db.query("SELECT * FROM qna_library ORDER BY id DESC");
+    console.log(`📦 Returning ${result.rows.length} Q&A entries`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Failed to fetch questions:", err);
+    res.status(500).json({ message: "Database fetch error", error: err.message });
+  }
+});
+
+// Temporary Test Route
 app.get("/test-insert", async (req, res) => {
   const db = getDB();
 
   const sampleData = {
     question: "What is your implementation timeline?",
-    answer: "Our typical implementation takes 4-6 weeks.",
+    answer: "Our typical implementation takes 4–6 weeks.",
     category: "Implementation",
     subcategory: null
   };
@@ -113,17 +130,19 @@ app.get("/test-insert", async (req, res) => {
   }
 });
 
-// Initialize DB and start server
-initDB().then(() => {
-  const db = getDB();
+// Start the app after DB is ready
+initDB()
+  .then(() => {
+    const db = getDB();
 
-  db.query("SELECT NOW()")
-    .then(res => console.log("✅ Database connected:", res.rows[0]))
-    .catch(err => console.error("❌ DB query error:", err));
+    db.query("SELECT NOW()")
+      .then(res => console.log("✅ Database connected:", res.rows[0]))
+      .catch(err => console.error("❌ DB query error:", err));
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error("❌ Failed to initialize DB:", err);
   });
-}).catch(err => {
-  console.error("❌ Failed to initialize DB:", err);
-});

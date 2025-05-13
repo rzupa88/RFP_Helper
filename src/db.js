@@ -1,8 +1,4 @@
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
-
-console.log("Loaded DATABASE_URL:", process.env.DATABASE_URL);
-
+require("dotenv").config(); // Load environment variables
 const { Pool } = require("pg");
 const dns = require("dns").promises;
 const { URL } = require("url");
@@ -10,13 +6,7 @@ const { URL } = require("url");
 let pool = null;
 
 async function initDB() {
-  const dbUrlString = process.env.DATABASE_URL;
-
-  if (!dbUrlString) {
-    throw new Error("DATABASE_URL is undefined. Make sure your .env file is loaded.");
-  }
-
-  const dbUrl = new URL(dbUrlString);
+  const dbUrl = new URL(process.env.DATABASE_URL);
   const addresses = await dns.lookup(dbUrl.hostname, { family: 4 });
   const ipv4Host = addresses.address;
 
