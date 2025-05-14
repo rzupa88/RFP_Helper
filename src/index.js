@@ -146,3 +146,36 @@ initDB()
   .catch(err => {
     console.error("❌ Failed to initialize DB:", err);
   });
+
+  // Chatbot route - Phase 1
+app.post("/chat", async (req, res) => {
+  const db = getDB();
+  const { question } = req.body;
+
+  if (!question) {
+    return res.status(400).json({ message: "Missing question." });
+  }
+
+  try {
+   const result = await db.query(
+  `SELECT * FROM qna_library
+   WHERE similarity(question, $1) > 0.25
+   ORDER BY similarity(question, $1) DESC
+   LIMIT 1`,
+  [question]
+);
+
+
+    if (result.rows.length > 0) {
+      res.json({
+        match: result.rows[0],
+        message: "Match found"
+      });
+    } else {
+      res.status(404).json({ message: "No close match found." });
+    }
+  } catch (err) {
+    console.error("❌ Chat route error:", err);
+    res.status(500).json({ message: "Error searching Q&A library", error: err.message });
+  }
+});
