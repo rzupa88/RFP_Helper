@@ -2,9 +2,10 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RFP Helper - Admin Panel</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
   <style>
     :root {
       --light-bg: #f8f9fa;
@@ -17,10 +18,11 @@
     }
 
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Montserrat', 'Arial Narrow', sans-serif;
       background-color: var(--light-bg);
       color: var(--light-text);
       transition: background 0.3s, color 0.3s;
+      margin: 0;
     }
 
     [data-theme="dark"] body {
@@ -28,138 +30,224 @@
       color: var(--dark-text);
     }
 
-    .container {
-      background-color: var(--light-card);
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      margin-top: 2rem;
+    .wrapper {
+      display: flex;
+      min-height: 100vh;
     }
 
-    [data-theme="dark"] .container {
+    .sidebar {
+      width: 250px;
+      background-color: var(--light-card);
+      padding: 3rem 1rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .sidebar {
       background-color: var(--dark-card);
     }
 
-    h1 {
-      font-weight: bold;
-      display: flex;
-      align-items: center;
+    .sidebar.collapsed {
+      width: 0;
+      overflow: hidden;
     }
 
-    h1 img {
+    .content {
+      flex: 1;
+      padding: 2rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1000;
+    }
+
+    .logo {
       height: 40px;
       margin-right: 12px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 0.75rem 0;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .active-tab {
+      font-weight: bold;
     }
 
     .form-control, .form-select, .btn {
       border-radius: 12px;
     }
 
-    .table {
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .table th, .table td {
+    .table th {
       vertical-align: middle;
+      font-size: 1rem;
     }
 
-    .btn-danger {
-      border-radius: 20px;
+    .table td {
+      vertical-align: middle;
+      font-size: .85rem;
     }
 
     .btn-primary {
       background: var(--primary);
       border: none;
-      border-radius: 20px;
     }
 
     .btn-primary:hover {
       background: #0069d9;
     }
 
-    .theme-toggle {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-    }
-
-    [data-theme="dark"] .table {
-      background-color: var(--dark-card);
-      color: var(--dark-text);
-    }
-
+    [data-theme="dark"] .table,
     [data-theme="dark"] .form-control,
     [data-theme="dark"] .form-select {
       background-color: #2a2a2a;
       color: var(--dark-text);
       border-color: #444;
     }
+
+    .settings-section {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    /* Scrollable table styles */
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 12px;
+    }
+
+    .table thead th {
+      position: sticky;
+      top: 0;
+      background-color: #004b87;
+      color: white;
+      z-index: 2;
+    }
+
+    [data-theme="dark"] .table thead th {
+      background-color: #1e1e1e;
+    }
   </style>
 </head>
 <body>
-  <div class="theme-toggle">
-    <button id="themeToggle" class="btn btn-outline-secondary btn-sm">🌙 Dark Mode</button>
-  </div>
+  <button class="btn btn-outline-secondary toggle-btn" id="sidebarToggle">☰</button>
 
-  <div class="container">
-    <h1><img src="/WellNet-New-Logo_Vertical-Healthcare  - Copy.PNG" alt="Logo" /> RFP Helper - Admin Panel</h1>
-
-    <!-- Search & Filter -->
-    <div class="row my-4">
-      <div class="col-md-6">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..." />
-      </div>
-      <div class="col-md-4">
-        <select id="categoryFilter" class="form-select">
-          <option value="">All Categories</option>
-        </select>
-      </div>
+  <div class="wrapper">
+    <div class="sidebar" id="sidebar">
+      <a href="#" class="nav-link active-tab" onclick="switchTab('admin')">📚 RFP Helper</a>
+      <a href="#" class="nav-link" onclick="switchTab('settings')">⚙️ Settings</a>
     </div>
 
-    <!-- Table -->
-    <table class="table table-bordered table-hover">
-      <thead class="table-light">
-        <tr>
-          <th>ID</th>
-          <th>Question</th>
-          <th>Answer</th>
-          <th>Category</th>
-          <th>Subcategory</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="qnaTableBody"></tbody>
-    </table>
+    <div class="content">
+      <!-- ADMIN TAB -->
+      <div id="admin" class="tab-content active">
+        <div class="d-flex align-items-center mb-4">
+          <img src="/WellNet-New-Logo_Vertical-Healthcare  - Copy.PNG" alt="Logo" class="logo"/>
+          <h2 class="mb-0">RFP Helper</h2>
+        </div>
 
-    <!-- Add New Entry -->
-    <h3 class="mt-5">➕ Add New Q&A</h3>
-    <form id="addQnaForm">
-      <div class="mb-3">
-        <input type="text" name="question" class="form-control" placeholder="Question" required />
+        <!-- Search & Filter -->
+        <div class="row my-4">
+          <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..."/>
+          </div>
+          <div class="col-md-4">
+            <select id="categoryFilter" class="form-select">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Scrollable Table -->
+        <div class="table-container mb-4">
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Question</th>
+                <th>Answer</th>
+                <th>Category</th>
+                <th>Subcategory</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="qnaTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Add Q&A -->
+        <h4 class="mt-4">➕ Add New Q&A</h4>
+        <form id="addQnaForm">
+          <div class="mb-3"><input type="text" name="question" class="form-control" placeholder="Question" required /></div>
+          <div class="mb-3"><textarea name="answer" class="form-control" placeholder="Answer" rows="3" required></textarea></div>
+          <div class="mb-3"><input type="text" name="category" class="form-control" placeholder="Category" required /></div>
+          <div class="mb-3"><input type="text" name="subcategory" class="form-control" placeholder="Subcategory (optional)" /></div>
+          <button class="btn btn-primary">Add Q&A</button>
+        </form>
       </div>
-      <div class="mb-3">
-        <textarea name="answer" class="form-control" placeholder="Answer" rows="3" required></textarea>
+
+      <!-- SETTINGS TAB -->
+      <div id="settings" class="tab-content settings-section">
+        <h2>⚙️ Settings</h2>
+        <button id="themeToggle" class="btn btn-outline-secondary mt-3">🌙 Toggle Dark Mode</button>
       </div>
-      <div class="mb-3">
-        <input type="text" name="category" class="form-control" placeholder="Category" required />
-      </div>
-      <div class="mb-3">
-        <input type="text" name="subcategory" class="form-control" placeholder="Subcategory (optional)" />
-      </div>
-      <button class="btn btn-primary">Add Q&A</button>
-    </form>
+    </div>
   </div>
 
   <script>
-    // Fetch and render Q&A data
+    // Sidebar toggle
+    document.getElementById("sidebarToggle").addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("collapsed");
+    });
+
+    // Theme toggle
+    const themeToggle = document.getElementById("themeToggle");
+    const html = document.documentElement;
+
+    function setTheme(theme) {
+      html.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+      themeToggle.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const current = html.getAttribute("data-theme");
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active-tab"));
+      document.getElementById(tabId).classList.add("active");
+      event.target.classList.add("active-tab");
+    }
+
+    // Q&A logic
     async function fetchQnAs() {
       const res = await fetch("/qna");
       const data = await res.json();
       const table = document.getElementById("qnaTableBody");
       const categorySet = new Set();
-
       table.innerHTML = "";
+
       data.forEach((item) => {
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -222,26 +310,6 @@
       });
     });
 
-    // DARK MODE TOGGLE
-    const themeToggle = document.getElementById("themeToggle");
-    const html = document.documentElement;
-
-    function setTheme(theme) {
-      html.setAttribute("data-theme", theme);
-      localStorage.setItem("theme", theme);
-      themeToggle.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
-    }
-
-    themeToggle.addEventListener("click", () => {
-      const current = html.getAttribute("data-theme");
-      setTheme(current === "dark" ? "light" : "dark");
-    });
-
-    // Initialize preferred theme
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-
-    // Load Q&A on page load
     fetchQnAs();
   </script>
 </body>
