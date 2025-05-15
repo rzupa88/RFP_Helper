@@ -1,0 +1,257 @@
+const express = require("express");
+const { createClient } = require("@supabase/supabase-js");
+const OpenAI = require("openai");
+const NodeCache = require("node-cache");
+const winston = require("winston");
+const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
+
+// Validate environment variables
+const requiredEnvVars = ["SUPABASE_URL", "SUPABASE_KEY", "XAI_API_KEY"];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`❌ Missing environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
+// Initialize logger
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
+    new winston.transports.File({ filename: "logs/combined.log" }),
+  ],
+});
+
+const app = express();
+app.use(cors());  // Enable CORS for all routes
+app.use(express.json());
+
+// Serve static files from the public directory
+const publicPath = path.join(__dirname, '../public');
+app.use(express.static(publicPath));
+logger.info(`Serving static files from: ${publicPath}`);
+
+// Redirect root to admin page
+app.get('/', (req, res) => {
+  res.redirect('/admin.html');
+});
+    new winston.transports.File({ filename: "logs/combined.log" }),
+    new winston.transports.Console()
+  ],
+});
+
+// Initialize cache (TTL: 1 hour)
+const cache = new NodeCache({ stdTTL: 3600 });
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+// Test Supabase connection
+(async () => {
+  try {
+    await supabase.from("qna_library").select("*").limit(1);
+    logger.info("✅ Supabase connection successful");
+  } catch (err) {
+    logger.error("❌ Supabase connection failed", { error: err.message });
+    process.exit(1);
+  }
+})();
+
+// Initialize xAI API client
+const xaiClient = new OpenAI({
+  apiKey: process.env.XAI_API_KEY,
+  baseURL: "https://api.x.ai/v1",
+});
+
+// Serve admin.html
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+
+// Get all Q&A entries
+app.get("/qna", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("qna_library")
+      .select("*")
+      .order("id", { ascending: true });
+    if (error) {
+      logger.error("Supabase query error in /qna", { error: error.message });
+      return res.status(500).json({ message: "Error fetching Q&A", error: error.message });
+    }
+    res.json(data);
+  } catch (err) {
+    logger.error("Unexpected error in /qna", { error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Add new Q&A
+app.post("/add-question", async (req, res) => {
+  const { question, answer, category, subcategory } = req.body;
+  if (!question || !answer || !category) {
+    return res.status(400).json({ message: "Missing required fields: question, answer, category" });
+  }
+  try {
+    const { error } = await supabase
+      .from("qna_library")
+      .insert([{ question, answer, category, subcategory }]);
+    if (error) {
+      logger.error("Supabase insert error in /add-question", { error: error.message });
+      return res.status(500).json({ message: "Error adding Q&A", error: error.message });
+    }
+    logger.info("Q&A added", { question, category });
+    res.status(201).json({ message: "Q&A added successfully" });
+  } catch (err) {
+    logger.error("Unexpected error in /add-question", { error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Delete Q&A
+app.delete("/qna/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase
+      .from("qna_library")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      logger.error("Supabase delete error in /qna/:id", { error: error.message });
+      return res.status(500).json({ message: "Error deleting Q&A", error: error.message });
+    }
+    logger.info("Q&A deleted", { id });
+    res.json({ message: "Q&A deleted successfully" });
+  } catch (err) {
+    logger.error("Unexpected error in /qna/:id", { error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Chatbot route with xAI API and caching
+app.post("/chat", async (req, res) => {
+  const { question } = req.body;
+  if (!question) {
+    return res.status(400).json({ message: "Missing question" });
+  }
+
+  // Check cache
+  const cacheKey = `chat:${question.toLowerCase().trim()}`;
+  const cachedResponse = cache.get(cacheKey);
+  if (cachedResponse) {
+    logger.info("Cache hit", { cacheKey });
+    return res.json(cachedResponse);
+  }
+
+  try {
+    // Fetch relevant Q&A entries for context
+    const { data: qnaEntries, error } = await supabase
+      .from("qna_library")
+      .select("*")
+      .textSearch("question", question, { config: "english", type: "plain" })
+      .order("similarity", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      logger.error("Supabase query error in /chat", { error: error.message });
+      throw new Error(`Supabase query error: ${error.message}`);
+    }
+
+    // Prepare context for Grok
+    const context = qnaEntries.map((row) => ({
+      question: row.question,
+      answer: row.answer,
+      category: row.category,
+      subcategory: row.subcategory,
+    }));
+
+    // Call xAI API
+    const completion = await xaiClient.chat.completions.create({
+      model: "grok-3", // Switch to "grok-3-mini" for cost savings if needed
+      messages: [
+        {
+          role: "system",
+          content: `You are an RFP assistant. Use the following Q&A context to answer the user's question accurately. If no relevant answer exists, respond with "No relevant answer found. Please consider adding a new Q&A entry." Context:\n${JSON.stringify(context, null, 2)}`,
+        },
+        { role: "user", content: question },
+      ],
+      max_tokens: 500,
+      temperature: 0.7,
+    });
+
+    // Log token usage
+    const tokenUsage = completion.usage;
+    logger.info("xAI API token usage", { question, tokenUsage });
+
+    // Prepare response
+    const responseData = {
+      message: "Response from Grok",
+      answer: completion.choices[0].message.content,
+      contextUsed: context,
+      tokenUsage,
+    };
+
+    // Cache response
+    cache.set(cacheKey, responseData);
+    res.json(responseData);
+  } catch (err) {
+    logger.error("xAI API error in /chat", { error: err.message });
+
+    // Fallback to similarity search
+    try {
+      const { data: fallbackResult, error: fallbackError } = await supabase
+        .from("qna_library")
+        .select("*")
+        .textSearch("question", question, { config: "english", type: "plain" })
+        .order("similarity", { ascending: false })
+        .limit(1);
+
+      if (fallbackError) {
+        logger.error("Supabase fallback query error in /chat", { error: fallbackError.message });
+        throw new Error(`Fallback query error: ${fallbackError.message}`);
+      }
+
+      if (fallbackResult.length > 0) {
+        const fallbackResponse = {
+          message: "Fallback match found",
+          match: fallbackResult[0],
+        };
+        cache.set(cacheKey, fallbackResponse);
+        return res.json(fallbackResponse);
+      }
+
+      const noMatchResponse = {
+        message: "No relevant answer found. Please consider adding a new Q&A entry.",
+      };
+      cache.set(cacheKey, noMatchResponse);
+      return res.status(404).json(noMatchResponse);
+    } catch (fallbackErr) {
+      logger.error("Unexpected fallback error in /chat", { error: fallbackErr.message });
+      return res.status(500).json({
+        message: "Error querying chatbot",
+        error: fallbackErr.message,
+      });
+    }
+  }
+});
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("RFP Helper API");
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+});

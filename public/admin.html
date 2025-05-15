@@ -1,293 +1,603 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RFP Helper - Admin Panel</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-<style>
-   :root {
-     --light-bg: #ffffff;
-     --dark-bg: #121212;
-     --light-text: #1a1a1a;
-     --dark-text: #f8f9fa;
-     --light-card: #f9f9f9;
-     --dark-card: #1e1e1e;
-     --primary: #002f87;
-   }
-   body {
-     font-family: 'Poppins', sans-serif;
-     background-color: var(--light-bg);
-     color: var(--light-text);
-     margin: 0;
-     transition: background 0.3s, color 0.3s;
-   }
-   [data-theme="dark"] body {
-     background-color: var(--dark-bg);
-     color: var(--dark-text);
-   }
-   .wrapper {
-     display: flex;
-     min-height: 100vh;
-   }
-   .sidebar {
-     width: 250px;
-     background-color: var(--light-card);
-     padding: 1rem;
-     transition: all 0.3s ease;
-   }
-   [data-theme="dark"] .sidebar {
-     background-color: var(--dark-card);
-   }
-   .sidebar.collapsed {
-     width: 0;
-     overflow: hidden;
-   }
-   .content {
-     flex: 1;
-     padding: 2rem;
-   }
-   .toggle-btn {
-     position: fixed;
-     top: 1rem;
-     left: 1rem;
-     z-index: 1000;
-   }
-   .header {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
-   }
-   .logo {
-     height: 40px;
-   }
-   .nav-link {
-     display: block;
-     padding: 0.5rem 0;
-     color: inherit;
-     text-decoration: none;
-   }
-   .active-tab {
-     font-weight: 600;
-     color: var(--primary);
-   }
-   .form-control, .form-select, .btn {
-     border-radius: 12px;
-   }
-   .table th, .table td {
-     vertical-align: middle;
-     font-size: 0.9rem;
-   }
-   .btn-primary {
-     background: var(--primary);
-     border: none;
-   }
-   .btn-primary:hover {
-     background: #0040a3;
-   }
-   [data-theme="dark"] .table,
-   [data-theme="dark"] .form-control,
-   [data-theme="dark"] .form-select {
-     background-color: #2a2a2a;
-     color: var(--dark-text);
-     border-color: #444;
-   }
-   .tab-content {
-     display: none;
-   }
-   .tab-content.active {
-     display: block;
-   }
-   .chat-area {
-     max-width: 600px;
-   }
-   .chat-response {
-     white-space: pre-wrap;
-     background: #f1f1f1;
-     padding: 1rem;
-     border-radius: 10px;
-     margin-top: 1rem;
-   }
-   [data-theme="dark"] .chat-response {
-     background: #2a2a2a;
-     color: var(--dark-text);
-   }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFP Helper - Admin Panel</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <!-- Animate.css for animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Google Fonts: Inter and Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --light-bg: #f6f8fc;
+      --dark-bg: #1a1e2e;
+      --light-text: #2d3748;
+      --dark-text: #e2e8f0;
+      --light-card: #ffffff;
+      --dark-card: #2d3748;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --gradient: linear-gradient(135deg, #3b82f6, #60a5fa);
+    }
+    body {
+      font-family: 'Inter', 'Poppins', sans-serif;
+      background-color: var(--light-bg);
+      color: var(--light-text);
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    [data-theme="dark"] body {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+    }
+    .wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: var(--light-card);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    [data-theme="dark"] .sidebar {
+      background-color: var(--dark-card);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+    .sidebar.collapsed {
+      width: 0;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 0;
+        overflow: hidden;
+      }
+      .sidebar.active {
+        width: 250px;
+      }
+    }
+    .content {
+      flex: 1;
+      padding: 2rem;
+    }
+    .header {
+      position: sticky;
+      top: 0;
+      background: var(--light-card);
+      padding: 1rem;
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    [data-theme="dark"] .header {
+      background: var(--dark-card);
+    }
+    .logo {
+      height: 50px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: inherit;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .nav-link:hover {
+      background: rgba(0,0,0,0.05);
+      transform: translateX(5px);
+    }
+    [data-theme="dark"] .nav-link:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .active-tab {
+      background: var(--gradient);
+      color: white;
+      font-weight: 600;
+    }
+    .form-control, .form-select, .btn {
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--gradient);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+    .table {
+      background: var(--light-card);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .table,
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+      background-color: #2a2a2a;
+      color: var(--dark-text);
+      border-color: #444;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .chat-area {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .chat-response {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .chat-bubble {
+      background: var(--light-card);
+      padding: 1rem;
+      border-radius: 12px 12px 0 12px;
+      max-width: 80%;
+      align-self: flex-end;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      animation: fadeIn 0.3s ease;
+    }
+    .chat-bubble.user {
+      background: var(--gradient);
+      color: white;
+      border-radius: 12px 12px 12px 0;
+      align-self: flex-start;
+    }
+    [data-theme="dark"] .chat-bubble {
+      background: #2a2a2a;
+    }
+    .chat-timestamp {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+    .typing-indicator {
+      display: none;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .suggest-qna-btn {
+      margin-top: 1rem;
+      display: none;
+      background: var(--accent);
+      color: white;
+    }
+    .suggest-qna-btn:hover {
+      background: #059669;
+      transform: scale(1.05);
+    }
+    .form-group {
+      position: relative;
+    }
+    .form-group .invalid-feedback {
+      display: none;
+      position: absolute;
+      bottom: -1.5rem;
+      font-size: 0.8rem;
+    }
+    .form-group .form-control:invalid ~ .invalid-feedback {
+      display: block;
+    }
+    .copy-btn {
+      font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .tooltip-inner {
+      background: var(--primary);
+      color: white;
+    }
+    .alert-dismissible {
+      margin-top: 1rem;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-<button class="btn btn-outline-secondary toggle-btn" id="sidebarToggle">☰</button>
-<div class="wrapper">
-<div class="sidebar" id="sidebar">
-<a href="#" class="nav-link active-tab" onclick="switchTab('admin')">📚 RFP Helper</a>
-<a href="#" class="nav-link" onclick="switchTab('chat')">🤖 Chatbot</a>
-<a href="#" class="nav-link" onclick="switchTab('settings')">⚙️ Settings</a>
-</div>
-<div class="content">
-<!-- ADMIN TAB -->
-<div id="admin" class="tab-content active">
-<div class="header">
-<img src="/WellNet-New-Logo_Vertical-Healthcare  - Copy.PNG" alt="Logo" class="logo" />
-<h2>RFP Helper</h2>
-</div>
-<div class="row my-4">
-<div class="col-md-6">
-<input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..." />
-</div>
-<div class="col-md-4">
-<select id="categoryFilter" class="form-select">
-<option value="">All Categories</option>
-</select>
-</div>
-</div>
-<table class="table table-bordered table-hover">
-<thead class="table-light">
-<tr>
-<th>ID</th>
-<th>Question</th>
-<th>Answer</th>
-<th>Category</th>
-<th>Subcategory</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody id="qnaTableBody"></tbody>
-</table>
-<h4 class="mt-5">➕ Add New Q&A</h4>
-<form id="addQnaForm">
-<div class="mb-3"><input type="text" name="question" class="form-control" placeholder="Question" required /></div>
-<div class="mb-3"><textarea name="answer" class="form-control" placeholder="Answer" rows="3" required></textarea></div>
-<div class="mb-3"><input type="text" name="category" class="form-control" placeholder="Category" required /></div>
-<div class="mb-3"><input type="text" name="subcategory" class="form-control" placeholder="Subcategory (optional)" /></div>
-<button class="btn btn-primary">Add Q&A</button>
-</form>
-</div>
-<!-- CHATBOT TAB -->
-<div id="chat" class="tab-content">
-<h2>🤖 Ask the RFP Chatbot</h2>
-<div class="chat-area">
-<textarea id="chatInput" class="form-control mb-3" rows="4" placeholder="Type your question here..."></textarea>
-<button class="btn btn-primary" onclick="askChatbot()">Submit</button>
-<div id="chatResponse" class="chat-response mt-3"></div>
-</div>
-</div>
-<!-- SETTINGS TAB -->
-<div id="settings" class="tab-content">
-<h2>⚙️ Settings</h2>
-<button id="themeToggle" class="btn btn-outline-secondary mt-3">🌙 Toggle Dark Mode</button>
-</div>
-</div>
-</div>
-<script>
-   // Sidebar toggle
-   document.getElementById("sidebarToggle").addEventListener("click", () => {
-     document.getElementById("sidebar").classList.toggle("collapsed");
-   });
-   // Theme toggle
-   const themeToggle = document.getElementById("themeToggle");
-   const html = document.documentElement;
-   function setTheme(theme) {
-     html.setAttribute("data-theme", theme);
-     localStorage.setItem("theme", theme);
-     themeToggle.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
-   }
-   themeToggle?.addEventListener("click", () => {
-     const current = html.getAttribute("data-theme");
-     setTheme(current === "dark" ? "light" : "dark");
-   });
-   const savedTheme = localStorage.getItem("theme") || "light";
-   setTheme(savedTheme);
-   // Tab switching
-   function switchTab(tabId) {
-     document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-     document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active-tab"));
-     document.getElementById(tabId).classList.add("active");
-     event.target.classList.add("active-tab");
-   }
-   // Fetch Q&A for admin table
-   async function fetchQnAs() {
-     const res = await fetch("/qna");
-     const data = await res.json();
-     const table = document.getElementById("qnaTableBody");
-     const categorySet = new Set();
-     table.innerHTML = "";
-     data.forEach((item) => {
-       const row = document.createElement("tr");
-       row.innerHTML = `
-<td>${item.id}</td>
-<td>${item.question}</td>
-<td>${item.answer}</td>
-<td>${item.category}</td>
-<td>${item.subcategory || ""}</td>
-<td><button class='btn btn-sm btn-danger' onclick='deleteQna(${item.id})'>Delete</button></td>
-       `;
-       table.appendChild(row);
-       categorySet.add(item.category);
-     });
-     const categoryFilter = document.getElementById("categoryFilter");
-     categoryFilter.innerHTML = `<option value="">All Categories</option>`;
-     categorySet.forEach(cat => {
-       const opt = document.createElement("option");
-       opt.value = cat;
-       opt.textContent = cat;
-       categoryFilter.appendChild(opt);
-     });
-   }
-   async function deleteQna(id) {
-     if (!confirm("Are you sure?")) return;
-     await fetch(`/qna/${id}`, { method: "DELETE" });
-     fetchQnAs();
-   }
-   document.getElementById("addQnaForm").addEventListener("submit", async (e) => {
-     e.preventDefault();
-     const formData = new FormData(e.target);
-     const data = Object.fromEntries(formData.entries());
-     await fetch("/add-question", {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify(data)
-     });
-     e.target.reset();
-     fetchQnAs();
-   });
-   document.getElementById("searchInput").addEventListener("input", (e) => {
-     const search = e.target.value.toLowerCase();
-     const rows = document.querySelectorAll("#qnaTableBody tr");
-     rows.forEach((row) => {
-       row.style.display = row.innerText.toLowerCase().includes(search) ? "" : "none";
-     });
-   });
-   document.getElementById("categoryFilter").addEventListener("change", (e) => {
-     const filter = e.target.value;
-     const rows = document.querySelectorAll("#qnaTableBody tr");
-     rows.forEach((row) => {
-       const cell = row.children[3];
-       row.style.display = !filter || cell.textContent === filter ? "" : "none";
-     });
-   });
-   // Chatbot interaction
-   async function askChatbot() {
-     const input = document.getElementById("chatInput").value.trim();
-     const output = document.getElementById("chatResponse");
-     if (!input) return;
-     output.innerHTML = "🤖 Thinking...";
-     try {
-       const res = await fetch("/chat", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ question: input })
-       });
-       const data = await res.json();
-       if (res.ok) {
-         output.innerHTML = `<strong>Answer:</strong> ${data.match.answer}`;
-       } else {
-         output.innerHTML = `<strong>No match found.</strong>`;
-       }
-     } catch (err) {
-       output.innerHTML = `<strong>Error:</strong> Could not reach the server.`;
-     }
-   }
-   fetchQnAs();
-</script>
+  <button class="btn btn-outline-secondary toggle-btn" id="sidebarToggle" data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle Sidebar">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="wrapper">
+    <div class="sidebar" id="sidebar">
+      <a href="#" class="nav-link active-tab" onclick="switchTab('admin')"><i class="fas fa-book"></i> RFP Helper</a>
+      <a href="#" class="nav-link" onclick="switchTab('chat')"><i class="fas fa-robot"></i> Chatbot</a>
+      <a href="#" class="nav-link" onclick="switchTab('settings')"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+    <div class="content">
+      <!-- HEADER -->
+      <div class="header animate__animated animate__fadeIn">
+        <img src="/WellNet-New-Logo_Vertical-Healthcare - Copy.PNG" alt="Logo" class="logo" />
+        <h2>RFP Helper</h2>
+      </div>
+      <!-- ADMIN TAB -->
+      <div id="admin" class="tab-content active animate__animated animate__fadeIn">
+        <div id="qnaFeedback" class="mb-3"></div>
+        <div class="row my-4">
+          <div class="col-md-6 mb-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..." />
+          </div>
+          <div class="col-md-4 mb-3">
+            <select id="categoryFilter" class="form-select">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Question</th>
+                <th>Answer</th>
+                <th>Category</th>
+                <th>Subcategory</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="qnaTableBody">
+              <tr id="qnaLoadingRow">
+                <td colspan="6" class="text-center">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h4 class="mt-5">➕ Add New Q&A</h4>
+        <form id="addQnaForm" class="needs-validation" novalidate>
+          <div class="form-group mb-3">
+            <input type="text" name="question" class="form-control" placeholder="Enter question" required />
+            <div class="invalid-feedback">Question is required.</div>
+          </div>
+          <div class="form-group mb-3">
+            <textarea name="answer" class="form-control" placeholder="Enter answer" rows="3" required></textarea>
+            <div class="invalid-feedback">Answer is required.</div>
+          </div>
+          <div class="form-group mb-3">
+            <input type="text" name="category" class="form-control" placeholder="Enter category" required />
+            <div class="invalid-feedback">Category is required.</div>
+          </div>
+          <div class="form-group mb-3">
+            <input type="text" name="subcategory" class="form-control" placeholder="Enter subcategory (optional)" />
+          </div>
+          <button class="btn btn-primary" type="submit">Add Q&A</button>
+        </form>
+      </div>
+      <!-- CHATBOT TAB -->
+      <div id="chat" class="tab-content animate__animated animate__fadeIn">
+        <h2><i class="fas fa-robot"></i> Ask the RFP Chatbot</h2>
+        <div class="chat-area">
+          <textarea id="chatInput" class="form-control mb-3" rows="4" placeholder="Type your question here (e.g., What is the implementation timeline?)"></textarea>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" onclick="askChatbot()">Submit</button>
+            <button class="btn btn-outline-secondary" onclick="clearChat()">Clear Chat</button>
+          </div>
+          <div id="chatResponse" class="chat-response">
+            <div class="typing-indicator">🤖 Typing<span>.</span><span>.</span><span>.</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- SETTINGS TAB -->
+      <div id="settings" class="tab-content animate__animated animate__fadeIn">
+        <h2><i class="fas fa-cog"></i> Settings</h2>
+        <div class="form-check form-switch mt-3">
+          <input class="form-check-input" type="checkbox" id="themeToggle" />
+          <label class="form-check-label" for="themeToggle">Dark Mode</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add this section if not present -->
+  <div class="container mt-5">
+    <table id="qaTable" class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Question</th>
+          <th>Answer</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Bootstrap JS and Popper for tooltips -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].forEach(el => new bootstrap.Tooltip(el));
+    // Sidebar toggle
+    document.getElementById("sidebarToggle").addEventListener("click", () => {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("collapsed");
+      sidebar.classList.toggle("active");
+    });
+    // Theme toggle
+    const themeToggle = document.getElementById("themeToggle");
+    const html = document.documentElement;
+    function setTheme(theme) {
+      html.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+      themeToggle.checked = theme === "dark";
+    }
+    themeToggle?.addEventListener("change", () => {
+      setTheme(themeToggle.checked ? "dark" : "light");
+    });
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active", "animate__animated", "animate__fadeIn"));
+      document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active-tab"));
+      const activeTab = document.getElementById(tabId);
+      activeTab.classList.add("active", "animate__animated", "animate__fadeIn");
+      document.querySelector(`a[onclick="switchTab('${tabId}')"]`).classList.add("active-tab");
+    }
+    // Show alert messages
+    function showAlert(containerId, message, type = "success") {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      setTimeout(() => container.innerHTML = "", 5000);
+    }
+    // Fetch Q&A for admin table
+    async function fetchQnAs() {
+      const table = document.getElementById("qnaTableBody");
+      const loadingRow = document.getElementById("qnaLoadingRow");
+      const categorySet = new Set();
+      try {
+        loadingRow.style.display = "table-row";
+        const res = await fetch("/qna");
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        const data = await res.json();
+        loadingRow.style.display = "none";
+        table.innerHTML = "";
+        if (data.length === 0) {
+          table.innerHTML = `<tr><td colspan="6" class="text-center">No Q&A entries found. Add some below!</td></tr>`;
+        } else {
+          data.forEach((item) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item.id}</td>
+              <td>${item.question}</td>
+              <td>
+                ${item.answer}
+                <button class="btn btn-outline-secondary copy-btn ms-2" onclick="copyToClipboard('${item.answer.replace(/'/g, "\\'")}')" data-bs-toggle="tooltip" title="Copy Answer">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </td>
+              <td>${item.category}</td>
+              <td>${item.subcategory || ""}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" onclick="deleteQna(${item.id})" data-bs-toggle="tooltip" title="Delete Q&A">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            `;
+            table.appendChild(row);
+            categorySet.add(item.category);
+          });
+        }
+        const categoryFilter = document.getElementById("categoryFilter");
+        categoryFilter.innerHTML = `<option value="">All Categories</option>`;
+        categorySet.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          categoryFilter.appendChild(opt);
+        });
+      } catch (err) {
+        loadingRow.style.display = "none";
+        table.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error loading Q&A entries: ${err.message}</td></tr>`;
+        showAlert("qnaFeedback", "Failed to load Q&A entries. Please try again.", "danger");
+      }
+    }
+    async function deleteQna(id) {
+      if (!confirm("Are you sure you want to delete this Q&A?")) return;
+      try {
+        const res = await fetch(`/qna/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        showAlert("qnaFeedback", "Q&A deleted successfully", "success");
+        fetchQnAs();
+      } catch (err) {
+        showAlert("qnaFeedback", `Error deleting Q&A: ${err.message}`, "danger");
+      }
+    }
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showAlert("qnaFeedback", "Answer copied to clipboard!", "success");
+      });
+    }
+    // Add Q&A form submission
+    document.getElementById("addQnaForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      try {
+        const res = await fetch("/add-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        form.reset();
+        form.classList.remove("was-validated");
+        fetchQnAs();
+        showAlert("qnaFeedback", "Q&A added successfully!", "success");
+      } catch (err) {
+        showAlert("qnaFeedback", `Error adding Q&A: ${err.message}`, "danger");
+      }
+    });
+    // Search and filter
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const search = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll("#qnaTableBody tr");
+      rows.forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(search) ? "" : "none";
+      });
+    });
+    document.getElementById("categoryFilter").addEventListener("change", (e) => {
+      const filter = e.target.value;
+      const rows = document.querySelectorAll("#qnaTableBody tr");
+      rows.forEach((row) => {
+        const cell = row.children[3];
+        row.style.display = !filter || cell.textContent === filter ? "" : "none";
+      });
+    });
+    // Chatbot interaction
+    async function askChatbot() {
+      const input = document.getElementById("chatInput").value.trim();
+      const output = document.getElementById("chatResponse");
+      const typingIndicator = document.querySelector(".typing-indicator");
+      if (!input) {
+        output.innerHTML = `
+          <div class="chat-bubble">
+            <strong>Error:</strong> Please enter a question.
+          </div>
+        `;
+        return;
+      }
+      // Add user message
+      const timestamp = new Date().toLocaleTimeString();
+      output.innerHTML += `
+        <div class="chat-bubble user">
+          <strong>You:</strong> ${input}
+          <div class="chat-timestamp">${timestamp}</div>
+        </div>
+      `;
+      typingIndicator.style.display = "block";
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: input })
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        const data = await res.json();
+        typingIndicator.style.display = "none";
+        const responseTimestamp = new Date().toLocaleTimeString();
+        if (data.answer) {
+          output.innerHTML += `
+            <div class="chat-bubble">
+              <strong>Grok:</strong> ${data.answer}
+              <div class="chat-timestamp">${responseTimestamp}</div>
+            </div>
+          `;
+        } else if (data.match) {
+          output.innerHTML += `
+            <div class="chat-bubble">
+              <strong>Fallback:</strong> ${data.match.answer}
+              <div class="chat-timestamp">${responseTimestamp}</div>
+            </div>
+          `;
+        } else {
+          output.innerHTML += `
+            <div class="chat-bubble">
+              <strong>${data.message || "No answer found."}</strong>
+              <button class="btn btn-outline-secondary suggest-qna-btn mt-2" onclick="switchTab('admin')">
+                <i class="fas fa-plus"></i> Suggest New Q&A
+              </button>
+              <div class="chat-timestamp">${responseTimestamp}</div>
+            </div>
+          `;
+        }
+        output.scrollTop = output.scrollHeight;
+      } catch (err) {
+        typingIndicator.style.display = "none";
+        output.innerHTML += `
+          <div class="chat-bubble alert alert-danger">
+            <strong>Error:</strong> Failed to reach the server. Please try again.
+            <div class="chat-timestamp">${new Date().toLocaleTimeString()}</div>
+          </div>
+        `;
+        console.error("Chatbot error:", err);
+      }
+    }
+    function clearChat() {
+      const output = document.getElementById("chatResponse");
+      output.innerHTML = '<div class="typing-indicator">🤖 Typing<span>.</span><span>.</span><span>.</span></div>';
+      document.getElementById("chatInput").value = "";
+    }
+    fetchQnAs();
+  </script>
+  <script>
+    // Load Q&A table
+    async function loadQATable() {
+      try {
+        const response = await fetch('/qna');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const tableBody = document.querySelector('#qaTable tbody');
+        tableBody.innerHTML = '';
+        
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.question}</td>
+            <td>${item.answer}</td>
+            <td>
+              <button class="btn btn-sm btn-primary edit-btn" data-id="${item.id}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-danger delete-btn" data-id="${item.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error loading Q&A:', error);
+        alert('Error loading Q&A entries');
+      }
+    }
+
+    // Load table when page loads
+    document.addEventListener('DOMContentLoaded', loadQATable);
+  </script>
 </body>
 </html>

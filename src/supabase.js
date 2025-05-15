@@ -1,7 +1,41 @@
-// src/supabase.js
 import { createClient } from '@supabase/supabase-js'
+import dotenv from 'dotenv'
+import { logger } from './logger.js'
 
-const supabaseUrl = 'https://kmwmxzsjxkjzawnlmyrh.supabase.co'
-const supabaseKey = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttd214enNqeGtqemF3bmxteXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxNTg0NzMsImV4cCI6MjA2MjczNDQ3M30.muJvANRzqe1zvaNQ4iAIPFVLKJEU-Awt1vkas8TgXN0 // From Supabase Project → Settings → API
+dotenv.config()
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  logger.error('Missing Supabase credentials')
+  throw new Error('Missing Supabase credentials')
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  }
+})
+
+// Test connection
+const testConnection = async () => {
+  try {
+    // Fix the count query syntax
+    const { data, error } = await supabase
+      .from('qna_library')
+      .select('id', { count: 'exact', head: true });
+    
+    if (error) throw error;
+    logger.info('✅ Supabase connection successful');
+  } catch (err) {
+    logger.error('Supabase connection failed:', err);
+  }
+};
+
+testConnection();
+
+export default supabase
