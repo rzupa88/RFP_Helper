@@ -7,18 +7,16 @@ let pool = null;
 
 async function initDB() {
   const dbUrl = new URL(process.env.DATABASE_URL);
-  const addresses = await dns.lookup(dbUrl.hostname, { family: 4 });
-  const ipv4Host = addresses.address;
-
   pool = new Pool({
     user: dbUrl.username,
     password: dbUrl.password,
-    host: ipv4Host,
-    port: dbUrl.port,
+    host: dbUrl.hostname,
+    port: parseInt(dbUrl.port),
     database: dbUrl.pathname.slice(1),
     ssl: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: false
     },
+    family: 4 // Force IPv4
   });
 
   try {
