@@ -161,7 +161,34 @@ app.get("/test-xai", async (req, res) => {
   }
 });
 
+// Import XAI service
 const xai = require('./xai');
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  console.log('Health check requested');
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// AI question answering endpoint
+app.post('/api/answer', async (req, res) => {
+  try {
+    console.log('Received question:', req.body.question);
+    const { question } = req.body;
+    if (!question) {
+      console.error('No question provided');
+      return res.status(400).json({ error: "Question is required" });
+    }
+    
+    console.log('Generating response...');
+    const answer = await xai.generateResponse(question);
+    console.log('Response generated:', answer.substring(0, 50) + '...');
+    res.json({ answer });
+  } catch (error) {
+    console.error('Error generating answer:', error);
+    res.status(500).json({ error: "Failed to generate answer" });
+  }
+});
 
 // Chatbot route with XAI integration
 app.post("/chat", async (req, res) => {
