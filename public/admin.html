@@ -1,310 +1,151 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RFP Helper - Admin Panel</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-<style>
-   :root {
-     --light-bg: #ffffff;
-     --dark-bg: #121212;
-     --light-text: #1a1a1a;
-     --dark-text: #f8f9fa;
-     --light-card: #f9f9f9;
-     --dark-card: #1e1e1e;
-     --primary: #002f87;
-   }
-   body {
-     font-family: 'Poppins', sans-serif;
-     background-color: var(--light-bg);
-     color: var(--light-text);
-     margin: 0;
-     transition: background 0.3s, color 0.3s;
-   }
-   [data-theme="dark"] body {
-     background-color: var(--dark-bg);
-     color: var(--dark-text);
-   }
-   .wrapper {
-     display: flex;
-     min-height: 100vh;
-   }
-   .sidebar {
-     width: 250px;
-     background-color: var(--light-card);
-     padding: 1rem;
-     transition: all 0.3s ease;
-   }
-   [data-theme="dark"] .sidebar {
-     background-color: var(--dark-card);
-   }
-   .sidebar.collapsed {
-     width: 0;
-     overflow: hidden;
-   }
-   .content {
-     flex: 1;
-     padding: 2rem;
-   }
-   .toggle-btn {
-     position: fixed;
-     top: 1rem;
-     left: 1rem;
-     z-index: 1000;
-   }
-   .header {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
-   }
-   .logo {
-     height: 40px;
-   }
-   .nav-link {
-     display: block;
-     padding: 0.5rem 0;
-     color: inherit;
-     text-decoration: none;
-   }
-   .active-tab {
-     font-weight: 600;
-     color: var(--primary);
-   }
-   .form-control, .form-select, .btn {
-     border-radius: 12px;
-   }
-   .table th, .table td {
-     vertical-align: middle;
-     font-size: 0.9rem;
-   }
-   .btn-primary {
-     background: var(--primary);
-     border: none;
-   }
-   .btn-primary:hover {
-     background: #0040a3;
-   }
-   [data-theme="dark"] .table,
-   [data-theme="dark"] .form-control,
-   [data-theme="dark"] .form-select {
-     background-color: #2a2a2a;
-     color: var(--dark-text);
-     border-color: #444;
-   }
-   .tab-content {
-     display: none;
-   }
-   .tab-content.active {
-     display: block;
-   }
-   .chat-area {
-     max-width: 600px;
-   }
-   .chat-response {
-     white-space: pre-wrap;
-     background: #f1f1f1;
-     padding: 1rem;
-     border-radius: 10px;
-     margin-top: 1rem;
-   }
-   [data-theme="dark"] .chat-response {
-     background: #2a2a2a;
-     color: var(--dark-text);
-   }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFP Helper - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/admin.css" />
 </head>
 <body>
-<button class="btn btn-outline-secondary toggle-btn" id="sidebarToggle">☰</button>
-<div class="wrapper">
-<div class="sidebar" id="sidebar">
-<a href="#" class="nav-link active-tab" onclick="switchTab('admin')">📚 RFP Helper</a>
-<a href="#" class="nav-link" onclick="switchTab('chat')">🤖 Chatbot</a>
-<a href="#" class="nav-link" onclick="switchTab('settings')">⚙️ Settings</a>
-</div>
-<div class="content">
-<!-- ADMIN TAB -->
-<div id="admin" class="tab-content active">
-<div class="header">
-<img src="/WellNet-New-Logo_Vertical-Healthcare  - Copy.PNG" alt="Logo" class="logo" />
-<h2>RFP Helper</h2>
-</div>
-<div class="row my-4">
-<div class="col-md-6">
-<input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..." />
-</div>
-<div class="col-md-4">
-<select id="categoryFilter" class="form-select">
-<option value="">All Categories</option>
-</select>
-</div>
-</div>
-<table class="table table-bordered table-hover">
-<thead class="table-light">
-<tr>
-<th>ID</th>
-<th>Question</th>
-<th>Answer</th>
-<th>Category</th>
-<th>Subcategory</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody id="qnaTableBody"></tbody>
-</table>
-<h4 class="mt-5">➕ Add New Q&A</h4>
-<form id="addQnaForm">
-<div class="mb-3"><input type="text" name="question" class="form-control" placeholder="Question" required /></div>
-<div class="mb-3"><textarea name="answer" class="form-control" placeholder="Answer" rows="3" required></textarea></div>
-<div class="mb-3"><input type="text" name="category" class="form-control" placeholder="Category" required /></div>
-<div class="mb-3"><input type="text" name="subcategory" class="form-control" placeholder="Subcategory (optional)" /></div>
-<button class="btn btn-primary">Add Q&A</button>
-</form>
-</div>
-<!-- CHATBOT TAB -->
-<div id="chat" class="tab-content">
-<h2>🤖 Ask the RFP Chatbot</h2>
-<div class="chat-area">
-<textarea id="chatInput" class="form-control mb-3" rows="4" placeholder="Type your question here..."></textarea>
-<button class="btn btn-primary" onclick="askChatbot()">Submit</button>
-<div id="chatResponse" class="chat-response mt-3"></div>
-</div>
-</div>
-<!-- SETTINGS TAB -->
-<div id="settings" class="tab-content">
-<h2>⚙️ Settings</h2>
-<button id="themeToggle" class="btn btn-outline-secondary mt-3">🌙 Toggle Dark Mode</button>
-</div>
-</div>
-</div>
-<script>
-   // Sidebar toggle
-   document.getElementById("sidebarToggle").addEventListener("click", () => {
-     document.getElementById("sidebar").classList.toggle("collapsed");
-   });
-   // Theme toggle
-   const themeToggle = document.getElementById("themeToggle");
-   const html = document.documentElement;
-   function setTheme(theme) {
-     html.setAttribute("data-theme", theme);
-     localStorage.setItem("theme", theme);
-     themeToggle.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
-   }
-   themeToggle?.addEventListener("click", () => {
-     const current = html.getAttribute("data-theme");
-     setTheme(current === "dark" ? "light" : "dark");
-   });
-   const savedTheme = localStorage.getItem("theme") || "light";
-   setTheme(savedTheme);
-   // Tab switching
-   function switchTab(tabId) {
-     document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-     document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active-tab"));
-     document.getElementById(tabId).classList.add("active");
-     event.target.classList.add("active-tab");
-   }
-   // Fetch Q&A for admin table
-   async function fetchQnAs() {
-     const res = await fetch("/qna");
-     const data = await res.json();
-     const table = document.getElementById("qnaTableBody");
-     const categorySet = new Set();
-     table.innerHTML = "";
-     data.forEach((item) => {
-       const row = document.createElement("tr");
-       row.innerHTML = `
-<td>${item.id}</td>
-<td>${item.question}</td>
-<td>${item.answer}</td>
-<td>${item.category}</td>
-<td>${item.subcategory || ""}</td>
-<td><button class='btn btn-sm btn-danger' onclick='deleteQna(${item.id})'>Delete</button></td>
-       `;
-       table.appendChild(row);
-       categorySet.add(item.category);
-     });
-     const categoryFilter = document.getElementById("categoryFilter");
-     categoryFilter.innerHTML = `<option value="">All Categories</option>`;
-     categorySet.forEach(cat => {
-       const opt = document.createElement("option");
-       opt.value = cat;
-       opt.textContent = cat;
-       categoryFilter.appendChild(opt);
-     });
-   }
-   async function deleteQna(id) {
-     if (!confirm("Are you sure?")) return;
-     await fetch(`/qna/${id}`, { method: "DELETE" });
-     fetchQnAs();
-   }
-   document.getElementById("addQnaForm").addEventListener("submit", async (e) => {
-     e.preventDefault();
-     const formData = new FormData(e.target);
-     const data = Object.fromEntries(formData.entries());
-     await fetch("/add-question", {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify(data)
-     });
-     e.target.reset();
-     fetchQnAs();
-   });
-   document.getElementById("searchInput").addEventListener("input", (e) => {
-     const search = e.target.value.toLowerCase();
-     const rows = document.querySelectorAll("#qnaTableBody tr");
-     rows.forEach((row) => {
-       row.style.display = row.innerText.toLowerCase().includes(search) ? "" : "none";
-     });
-   });
-   document.getElementById("categoryFilter").addEventListener("change", (e) => {
-     const filter = e.target.value;
-     const rows = document.querySelectorAll("#qnaTableBody tr");
-     rows.forEach((row) => {
-       const cell = row.children[3];
-       row.style.display = !filter || cell.textContent === filter ? "" : "none";
-     });
-   });
-   // Chatbot interaction
-   async function askChatbot(useGrok = false) {
-     const input = document.getElementById("chatInput").value.trim();
-     const output = document.getElementById("chatResponse");
-     if (!input) return;
-     output.innerHTML = "🤖 Thinking...";
-     try {
-       const res = await fetch("/chat", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ question: input, useGrok })
-       });
-       const data = await res.json();
-       if (data.askForGrok) {
-         output.innerHTML = `
-           <div>
-             <p><strong>No matching answer found in our database.</strong></p>
-             <p>Would you like Grok to try to answer your question?</p>
-             <button class="btn btn-primary" onclick="askChatbot(true)">Yes, ask Grok</button>
-           </div>
-         `;
-       } else if (data.match) {
-         let sourceInfo = data.source === "database" ? 
-           `<small class="text-muted">(From database${data.similarity ? ` - ${data.similarity} match` : ''})</small>` : 
-           '<small class="text-muted">(Generated by Grok)</small>';
-         
-         output.innerHTML = `
-           <div>
-             <strong>Answer:</strong> ${data.match.answer}
-             <br>${sourceInfo}
-           </div>
-         `;
-       } else {
-         output.innerHTML = `<strong>Error:</strong> ${data.message || 'No answer available.'}`;
-       }
-     } catch (err) {
-       output.innerHTML = `<strong>Error:</strong> Could not reach the server.`;
-     }
-   }
-   fetchQnAs();
-</script>
+    <button class="btn btn-outline-secondary toggle-btn" id="sidebarToggle">☰</button>
+    <div class="wrapper">
+        <div class="sidebar" id="sidebar">
+            <a href="#" class="nav-link active-tab" data-section="add">📚 RFP Helper</a>
+            <a href="#" class="nav-link" data-section="chat">🤖 Chatbot</a>
+            <a href="#" class="nav-link" data-section="settings">⚙️ Settings</a>
+        </div>
+        <div class="content">
+            <div class="container">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="add">Add Q&A</button>
+                    <button class="tab-button" data-tab="view">View Library</button>
+                    <button class="tab-button" data-tab="csv">Upload CSV</button>
+                </div>
+
+                <div id="add" class="tab-content active">
+                    <div class="header">
+                        <img src="/WellNet-New-Logo_Vertical-Healthcare  - Copy.PNG" alt="Logo" class="logo" />
+                        <h2>RFP Helper</h2>
+                    </div>
+                    <div class="row my-4">
+                        <div class="col-md-6">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search Q&A..." />
+                        </div>
+                        <div class="col-md-4">
+                            <select id="categoryFilter" class="form-select">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Question</th>
+                                <th>Answer</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qnaTableBody"></tbody>
+                    </table>
+                    <h4 class="mt-5">➕ Add New Q&A</h4>
+                    <form id="addQnaForm">
+                        <div class="mb-3">
+                            <input type="text" name="question" class="form-control" placeholder="Question" required />
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="answer" class="form-control" placeholder="Answer" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="category" class="form-control" placeholder="Category" required />
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="subcategory" class="form-control" placeholder="Subcategory (optional)" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Q&A</button>
+                    </form>
+                </div>
+
+                <div id="view" class="tab-content">
+                    <div class="header">
+                        <h2>📚 View Q&A Library</h2>
+                    </div>
+                    <div class="row my-4">
+                        <div class="col-md-6">
+                            <input type="text" id="searchLibraryInput" class="form-control" placeholder="Search Q&A..." />
+                        </div>
+                        <div class="col-md-4">
+                            <select id="categoryLibraryFilter" class="form-select">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Question</th>
+                                <th>Answer</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                            </tr>
+                        </thead>
+                        <tbody id="libraryTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="csv" class="tab-content">
+                    <div class="upload-container">
+                        <h2>Upload Questions CSV</h2>
+                        <p>Upload a CSV file containing questions to be processed and added to the Q&A library.</p>
+                        <form id="csvUploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="csvFile" class="form-label">Choose CSV File</label>
+                                <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" required>
+                                <div class="form-text">File should have a "Question" column</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload and Process</button>
+                        </form>
+                        <div id="uploadProgress" class="progress-container" style="display: none;">
+                            <div class="progress-bar"></div>
+                            <div class="progress-text">Processing: <span id="progressText">0%</span></div>
+                        </div>
+                        <div id="uploadStatus"></div>
+                    </div>
+                </div>
+
+                <div id="chat" class="tab-content">
+                    <div class="chat-container">
+                        <h2>🤖 Chatbot Interface</h2>
+                        <div class="mb-4">
+                            <div class="form-group">
+                                <label for="chatInput" class="form-label">Ask a question:</label>
+                                <textarea class="form-control" id="chatInput" rows="3" placeholder="Type your question here..."></textarea>
+                            </div>
+                            <button id="askButton" class="btn btn-primary mt-2">Ask Question</button>
+                        </div>
+                        <div id="chatResponse" class="chat-response p-3 border rounded">
+                            <!-- Response will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load JavaScript modules -->
+    <script src="/js/qna-manager.js"></script>
+    <script src="/js/csv-manager.js"></script>
+    <script src="/js/chatbot-manager.js"></script>
+    <script src="/js/admin-panel.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            AdminPanel.init();
+        });
+    </script>
 </body>
 </html>

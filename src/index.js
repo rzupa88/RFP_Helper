@@ -5,6 +5,8 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
+const csv = require('csv-parser');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,7 +45,7 @@ const upload = multer({
 
 // Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/upload.html"));
+  res.sendFile(path.join(__dirname, "../public/admin.html"));
 });
 
 app.get("/admin", (req, res) => {
@@ -262,6 +264,86 @@ app.post("/chat", async (req, res) => {
   } catch (err) {
     console.error("❌ Chat route error:", err);
     res.status(500).json({ message: "Error processing request", error: err.message });
+  }
+});
+
+// CSV Processing endpoint
+app.post('/process-csv', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  try {
+    const db = getDB();
+    const results = [];
+    let processedCount = 0;
+
+    // Create a promise to handle CSV processing
+    const processCSV = new Promise((resolve, reject) => {
+      fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on('data', (data) => {
+          // Check if Question column exists
+          if (data.Question || data.question) {
+            results.push(data.Question || data.question);
+          }
+        })
+        .on('end', () => resolve())
+        .on('error', reject);
+    });
+
+    await processCSV;
+
+    // Process each question
+    for (const question of results) {
+      try {
+        // Generate answer using XAI
+        const answer = await xai.generateResponse(question);
+        
+        // Insert into database
+        await db.query(
+          'INSERT INTO qna_library (question, answer, category) VALUES ($1, $2, $3)',
+          [question, answer, 'CSV Upload']
+        );
+        
+        processedCount++;
+      } catch (error) {
+        console.error(`Error processing question: ${question}`, error);
+        // Continue with next question even if one fails
+      }
+    }
+
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+
+    res.json({ 
+      message: 'CSV processed successfully', 
+      questionsProcessed: processedCount 
+    });
+  } catch (error) {
+    console.error('Error processing CSV:', error);
+    // Clean up file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ 
+      message: 'Error processing CSV file',
+      error: error.message 
+    });
+  }
+});
+
+// Delete Q&A entry
+app.delete("/qna/:id", async (req, res) => {
+  const db = getDB();
+  const id = req.params.id;
+
+  try {
+    await db.query("DELETE FROM qna_library WHERE id = $1", [id]);
+    res.json({ message: "Entry deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ message: "Error deleting entry", error: err.message });
   }
 });
 
