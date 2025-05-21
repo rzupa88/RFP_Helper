@@ -101,20 +101,43 @@
                 <div id="csv" class="tab-content">
                     <div class="upload-container">
                         <h2>Upload Questions CSV</h2>
-                        <p>Upload a CSV file containing questions to be processed and added to the Q&A library.</p>
+                        <p>Upload a CSV file with questions to get AI-generated answers. Review the answers before adding to the library.</p>
+                        
                         <form id="csvUploadForm" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label for="csvFile" class="form-label">Choose CSV File</label>
                                 <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" required>
                                 <div class="form-text">File should have a "Question" column</div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Upload and Process</button>
+                            <div class="btn-group">
+                                <button type="button" id="processBtn" class="btn btn-primary">Generate Answers</button>
+                                <button type="button" id="commitBtn" class="btn btn-success" disabled>Commit to Library</button>
+                            </div>
                         </form>
-                        <div id="uploadProgress" class="progress-container" style="display: none;">
+
+                        <div id="uploadProgress" class="progress-container mt-3" style="display: none;">
                             <div class="progress-bar"></div>
                             <div class="progress-text">Processing: <span id="progressText">0%</span></div>
                         </div>
-                        <div id="uploadStatus"></div>
+                        
+                        <div id="processedResults" class="mt-4" style="display: none;">
+                            <h4>Processed Results</h4>
+                            <button id="downloadBtn" class="btn btn-secondary mb-3">Download Processed CSV</button>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Question</th>
+                                            <th>Generated Answer</th>
+                                            <th>Edit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="processedTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="uploadStatus" class="mt-3"></div>
                     </div>
                 </div>
 
@@ -130,6 +153,44 @@
                         </div>
                         <div id="chatResponse" class="chat-response p-3 border rounded">
                             <!-- Response will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings" class="tab-content">
+                    <div class="container">
+                        <h2>⚙️ Settings</h2>
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Appearance</h5>
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Theme</label>
+                                    <button id="themeToggle" class="btn btn-outline-primary">
+                                        🌙 Dark Mode
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <h5 class="card-title">AI Settings</h5>
+                                <div class="mb-3">
+                                    <label for="minConfidence" class="form-label">
+                                        Minimum Confidence Score for Database Matches
+                                    </label>
+                                    <input type="range" class="form-range" id="minConfidence" 
+                                           min="0" max="100" value="25" step="5">
+                                    <div class="text-muted">Current: <span id="confidenceValue">25</span>%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="defaultCategory" class="form-label">
+                                        Default Category for CSV Uploads
+                                    </label>
+                                    <input type="text" class="form-control" id="defaultCategory" 
+                                           value="CSV Upload" placeholder="Enter default category">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

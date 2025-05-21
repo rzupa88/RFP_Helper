@@ -2,6 +2,7 @@ class AdminPanel {
     static init() {
         this.setupEventListeners();
         this.initializeManagers();
+        this.initializeSettings();
         QnAManager.fetchQnAs();
     }
 
@@ -45,8 +46,45 @@ class AdminPanel {
     }
 
     static initializeManagers() {
-        CSVManager.init();
-        ChatbotManager.init();
+        this.csvManager = new CSVManager();
+        this.chatbotManager = new ChatbotManager();
+    }
+
+    static initializeSettings() {
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeToggle.textContent = currentTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            
+            themeToggle.addEventListener('click', () => this.toggleTheme());
+        }
+
+        // Confidence slider
+        const confidenceSlider = document.getElementById('minConfidence');
+        const confidenceValue = document.getElementById('confidenceValue');
+        if (confidenceSlider && confidenceValue) {
+            const savedConfidence = localStorage.getItem('minConfidence') || '25';
+            confidenceSlider.value = savedConfidence;
+            confidenceValue.textContent = savedConfidence;
+
+            confidenceSlider.addEventListener('input', (e) => {
+                confidenceValue.textContent = e.target.value;
+                localStorage.setItem('minConfidence', e.target.value);
+            });
+        }
+
+        // Default category
+        const defaultCategory = document.getElementById('defaultCategory');
+        if (defaultCategory) {
+            const savedCategory = localStorage.getItem('defaultCategory') || 'CSV Upload';
+            defaultCategory.value = savedCategory;
+
+            defaultCategory.addEventListener('change', (e) => {
+                localStorage.setItem('defaultCategory', e.target.value);
+            });
+        }
     }
 
     static switchTab(tabId) {
@@ -81,21 +119,28 @@ class AdminPanel {
         // Add active class to clicked nav link
         target.classList.add('active-tab');
         
+        // Hide all sections first
+        document.querySelector('.tabs').style.display = 'none';
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.getElementById('chat').style.display = 'none';
+        
         const section = target.dataset.section;
         
         if (section === 'chat') {
-            // Hide tab buttons and all other content
-            document.querySelector('.tabs').style.display = 'none';
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.style.display = 'none';
-            });
             // Show chat section
             document.getElementById('chat').style.display = 'block';
         } else if (section === 'add') {
-            // Show tab buttons and restore tab content
+            // Show library sections and activate "Add Q&A" tab
             document.querySelector('.tabs').style.display = 'block';
-            document.getElementById('chat').style.display = 'none';
-            this.switchTab('add');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById('add').style.display = 'block';
+        } else if (section === 'settings') {
+            // Show settings section
+            document.getElementById('settings').style.display = 'block';
         }
     }
 

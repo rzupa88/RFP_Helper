@@ -1,82 +1,158 @@
 class CSVManager {
-    static init() {
-        const form = document.getElementById('csvUploadForm');
-        if (form) {
-            form.addEventListener('submit', this.handleUpload.bind(this));
-        }
+    constructor() {
+        this.processedData = null;
+        this.init();
     }
 
-    static async handleUpload(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const fileInput = document.getElementById('csvFile');
-        const progressBar = document.querySelector('.progress-bar');
-        const progressText = document.getElementById('progressText');
-        const uploadStatus = document.getElementById('uploadStatus');
-        const uploadProgress = document.getElementById('uploadProgress');
+    init() {
+        document.getElementById('processBtn').addEventListener('click', () => this.processCSV());
+        document.getElementById('commitBtn').addEventListener('click', () => this.commitToLibrary());
+        document.getElementById('downloadBtn').addEventListener('click', () => this.downloadProcessedCSV());
+    }
 
-        if (!fileInput || !fileInput.files[0]) {
-            this.showError('Please select a CSV file first');
+    async processCSV() {
+        const fileInput = document.getElementById('csvFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            this.showStatus('Please select a CSV file', 'error');
             return;
         }
 
+        const formData = new FormData();
+        formData.append('file', file);
+
         try {
-            // Validate file type
-            const file = fileInput.files[0];
-            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-                throw new Error('Please select a CSV file');
-            }
-
-            formData.append('file', file);
-            uploadProgress.style.display = 'block';
-            uploadStatus.textContent = 'Uploading...';
-            uploadStatus.className = '';
-            progressBar.style.width = '50%';
-            progressText.textContent = '50%';
-
+            this.showProgress(true);
             const response = await fetch('/process-csv', {
                 method: 'POST',
                 body: formData
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+                throw new Error('Failed to process CSV');
             }
 
             const result = await response.json();
-            this.showSuccess(`Processed ${result.questionsProcessed} questions successfully!`);
-            progressBar.style.width = '100%';
-            progressText.textContent = '100%';
-
-            // Refresh the Q&A tables
-            await QnAManager.fetchQnAs();
+            if (result.success) {
+                this.processedData = result.data;
+                this.displayProcessedResults();
+                document.getElementById('commitBtn').disabled = false;
+                this.showStatus('Processing complete! Review the answers before committing.', 'success');
+            }
         } catch (error) {
-            console.error('Upload error:', error);
-            this.showError(error.message);
+            this.showStatus(`Error processing CSV: ${error.message}`, 'error');
+        } finally {
+            this.showProgress(false);
+        }
+    }
+
+    displayProcessedResults() {
+        const tableBody = document.getElementById('processedTableBody');
+        const resultsDiv = document.getElementById('processedResults');
+        
+        tableBody.innerHTML = this.processedData.map((row, index) => `
+            <tr>
+                <td>${row.question}</td>
+                <td>
+                    <textarea class="form-control answer-edit" 
+                              data-index="${index}"
+                              rows="3">${row.answer}</textarea>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary save-edit" 
+                            data-index="${index}">Save Edit</button>
+                </td>
+            </tr>
+        `).join('');
+
+        resultsDiv.style.display = 'block';
+
+        // Add edit handlers
+        document.querySelectorAll('.save-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = e.target.dataset.index;
+                const newAnswer = document.querySelector(`textarea[data-index="${index}"]`).value;
+                this.processedData[index].answer = newAnswer;
+                this.showStatus('Answer updated', 'success');
+            });
+        });
+    }
+
+    async commitToLibrary() {
+        if (!this.processedData) {
+            this.showStatus('No processed data to commit', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/commit-csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data: this.processedData })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to commit to library');
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                this.showStatus('Successfully added to library!', 'success');
+                document.getElementById('commitBtn').disabled = true;
+                // Refresh the Q&A tables
+                await QnAManager.fetchQnAs();
+            }
+        } catch (error) {
+            this.showStatus(`Error committing to library: ${error.message}`, 'error');
+        }
+    }
+
+    downloadProcessedCSV() {
+        if (!this.processedData) {
+            this.showStatus('No processed data to download', 'error');
+            return;
+        }
+
+        const csv = this.convertToCSV(this.processedData);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'processed_questions.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    convertToCSV(data) {
+        const headers = ['Question', 'Answer'];
+        const rows = data.map(row => [row.question, row.answer]);
+        return [headers, ...rows]
+            .map(row => row.map(str => `"${str.replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+    }
+
+    showStatus(message, type = 'info') {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.textContent = message;
+        statusDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'}`;
+    }
+
+    showProgress(show) {
+        const progress = document.getElementById('uploadProgress');
+        const progressBar = progress.querySelector('.progress-bar');
+        const progressText = progress.querySelector('.progress-text');
+        
+        progress.style.display = show ? 'block' : 'none';
+        if (show) {
+            progressBar.style.width = '50%';
+            progressText.textContent = 'Processing...';
+        } else {
             progressBar.style.width = '0%';
             progressText.textContent = '0%';
-        } finally {
-            setTimeout(() => {
-                uploadProgress.style.display = 'none';
-                fileInput.value = '';
-            }, 2000);
-        }
-    }
-
-    static showError(message) {
-        const uploadStatus = document.getElementById('uploadStatus');
-        if (uploadStatus) {
-            uploadStatus.textContent = `Error: ${message}`;
-            uploadStatus.className = 'error';
-        }
-    }
-
-    static showSuccess(message) {
-        const uploadStatus = document.getElementById('uploadStatus');
-        if (uploadStatus) {
-            uploadStatus.textContent = message;
-            uploadStatus.className = 'success';
         }
     }
 }

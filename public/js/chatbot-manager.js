@@ -1,35 +1,53 @@
 class ChatbotManager {
-    static init() {
+    constructor() {
         this.setupEventListeners();
     }
 
-    static setupEventListeners() {
+    setupEventListeners() {
+        // Ensure listeners are only added once
+        if (this.initialized) return;
+        this.initialized = true;
+
         const chatInput = document.getElementById('chatInput');
         const askButton = document.getElementById('askButton');
         
         if (askButton) {
+            console.log('Adding click listener to ask button');
             askButton.addEventListener('click', () => this.askQuestion());
+        } else {
+            console.warn('Ask button not found');
         }
 
         if (chatInput) {
+            console.log('Adding keypress listener to chat input');
             chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     this.askQuestion();
                 }
             });
+        } else {
+            console.warn('Chat input not found');
         }
     }
 
-    static async askQuestion(useGrok = false) {
+    async askQuestion(useGrok = false) {
+        console.log('askQuestion called, useGrok:', useGrok);
         const chatInput = document.getElementById('chatInput');
         const chatResponse = document.getElementById('chatResponse');
         
-        if (!chatInput || !chatResponse) return;
+        if (!chatInput || !chatResponse) {
+            console.error('Chat elements not found:', { chatInput, chatResponse });
+            return;
+        }
         
         const question = chatInput.value.trim();
-        if (!question) return;
+        if (!question) {
+            console.warn('Empty question, not sending request');
+            return;
+        }
 
+        console.log('Sending chat request:', { question, useGrok });
         chatResponse.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>';
 
         try {
@@ -42,16 +60,21 @@ class ChatbotManager {
             if (!response.ok) throw new Error('Failed to get response');
             
             const data = await response.json();
+            console.log('Chat response:', data);
             
             if (data.askForGrok) {
                 chatResponse.innerHTML = `
                     <div class="alert alert-info">
                         <p>${data.message}</p>
-                        <button class="btn btn-primary mt-2" onclick="ChatbotManager.askQuestion(true)">
+                        <button class="btn btn-primary mt-2" id="askGrokBtn">
                             Yes, ask Grok
                         </button>
                     </div>
                 `;
+                // Add click handler to the newly created button
+                document.getElementById('askGrokBtn').addEventListener('click', () => {
+                    this.askQuestion(true);
+                });
             } else if (data.match) {
                 let sourceInfo = data.source === "database" ? 
                     `<small class="text-muted">(From database${data.similarity ? ` - ${data.similarity} match` : ''})</small>` : 

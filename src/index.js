@@ -267,49 +267,38 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// CSV Processing endpoint
+// CSV Processing endpoints
 app.post('/process-csv', upload.single('file'), async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+    return res.status(400).json({ 
+      success: false,
+      message: 'No file uploaded' 
+    });
   }
 
   try {
-    const db = getDB();
-    const results = [];
-    let processedCount = 0;
-
-    // Create a promise to handle CSV processing
-    const processCSV = new Promise((resolve, reject) => {
+    const questions = [];
+    await new Promise((resolve, reject) => {
       fs.createReadStream(req.file.path)
         .pipe(csv())
         .on('data', (data) => {
-          // Check if Question column exists
           if (data.Question || data.question) {
-            results.push(data.Question || data.question);
+            questions.push(data.Question || data.question);
           }
         })
-        .on('end', () => resolve())
+        .on('end', resolve)
         .on('error', reject);
     });
 
-    await processCSV;
-
-    // Process each question
-    for (const question of results) {
+    // Generate answers using XAI for each question
+    const processedData = [];
+    for (const question of questions) {
       try {
-        // Generate answer using XAI
         const answer = await xai.generateResponse(question);
-        
-        // Insert into database
-        await db.query(
-          'INSERT INTO qna_library (question, answer, category) VALUES ($1, $2, $3)',
-          [question, answer, 'CSV Upload']
-        );
-        
-        processedCount++;
+        processedData.push({ question, answer });
       } catch (error) {
-        console.error(`Error processing question: ${question}`, error);
-        // Continue with next question even if one fails
+        console.error(`Error generating answer for question: ${question}`, error);
+        processedData.push({ question, answer: 'Failed to generate answer' });
       }
     }
 
@@ -317,18 +306,58 @@ app.post('/process-csv', upload.single('file'), async (req, res) => {
     fs.unlinkSync(req.file.path);
 
     res.json({ 
-      message: 'CSV processed successfully', 
-      questionsProcessed: processedCount 
+      success: true,
+      data: processedData,
+      message: `Processed ${processedData.length} questions`
     });
   } catch (error) {
     console.error('Error processing CSV:', error);
-    // Clean up file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
     res.status(500).json({ 
+      success: false,
       message: 'Error processing CSV file',
       error: error.message 
+    });
+  }
+});
+
+app.post('/commit-csv', async (req, res) => {
+  const db = getDB();
+  const { data } = req.body;
+
+  if (!Array.isArray(data)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid data format. Expected array of Q&A pairs.'
+    });
+  }
+
+  try {
+    // Use a transaction to ensure all inserts succeed or none do
+    await db.query('BEGIN');
+
+    for (const { question, answer } of data) {
+      await db.query(
+        'INSERT INTO qna_library (question, answer, category) VALUES ($1, $2, $3)',
+        [question, answer, 'CSV Upload']
+      );
+    }
+
+    await db.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: `Successfully added ${data.length} entries to library`
+    });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('Error committing to library:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding entries to library',
+      error: error.message
     });
   }
 });

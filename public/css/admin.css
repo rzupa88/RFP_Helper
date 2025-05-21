@@ -206,3 +206,53 @@ body {
 [data-theme="dark"] .chat-response {
     background: var(--dark-card);
 }
+
+.card {
+    background: var(--light-card);
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .card {
+    background: var(--dark-card);
+    border-color: #444;
+}
+
+.card-title {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: var(--primary);
+}
+
+.form-range::-moz-range-thumb {
+    background: var(--primary);
+}
+
+#settings .container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#settings .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] #settings .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#settings .form-label {
+    font-weight: 500;
+}
+
+#settings .text-muted {
+    color: #6c757d !important;
+}
+
+[data-theme="dark"] #settings .text-muted {
+    color: #adb5bd !important;
+}
